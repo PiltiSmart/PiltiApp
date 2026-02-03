@@ -62,7 +62,11 @@
             },
             "resources": [],
             "shortDescription": "",
-            "targets": "all",
+            "targets": [
+                "dmg",
+                "deb",
+                "msi"
+            ],
             "windows": {
                 "certificateThumbprint": null,
                 "digestAlgorithm": "sha256",
