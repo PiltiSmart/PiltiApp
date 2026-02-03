@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [macos-13, ubuntu-22.04, windows-latest]
+        platform: [macos-13, macos-latest, ubuntu-22.04, windows-latest]
 
     runs-on: ${{ matrix.platform }}
     env:
@@ -31,8 +31,6 @@ jobs:
 
       - name: install Rust stable
         uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ matrix.platform == 'macos-13' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
 
       - name: Rust cache
         uses: swatinem/rust-cache@v2
@@ -57,4 +55,3 @@ jobs:
           releaseBody: "Automated release from GitHub Actions."
           releaseDraft: true
           prerelease: false
-          args: ${{ matrix.platform == 'macos-13' && '--target universal-apple-darwin' || '' }}
