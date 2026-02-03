@@ -7,8 +7,8 @@
         "withGlobalTauri": true
     },
     "package": {
-        "productName": "smartyappPWA",
-        "version": "0.1.0"
+        "productName": "Pilti",
+        "version": "1.0.0"
     },
     "tauri": {
         "allowlist": {
@@ -16,6 +16,23 @@
             "shell": {
                 "all": false,
                 "open": true
+            },
+            "dialog": {
+                "all": true
+            },
+            "fs": {
+                "all": true,
+                "scope": [
+                    "$APP/*",
+                    "$APP_CONFIG/*",
+                    "$DATA/*"
+                ]
+            },
+            "globalShortcut": {
+                "all": true
+            },
+            "window": {
+                "all": true
             }
         },
         "bundle": {
@@ -33,7 +50,7 @@
                 "icons/icon.icns",
                 "icons/icon.ico"
             ],
-            "identifier": "com.piltismart.smartyappPWA",
+            "identifier": "com.piltismart.pilti",
             "longDescription": "",
             "macOS": {
                 "entitlements": null,
@@ -52,7 +69,23 @@
             }
         },
         "security": {
-            "csp": null
+            "csp": null,
+            "dangerousRemoteDomainIpcAccess": [
+                {
+                    "domain": "smartyapp.piltismart.com",
+                    "windows": [
+                        "main"
+                    ],
+                    "enableTauriAPI": true
+                },
+                {
+                    "domain": "localhost",
+                    "windows": [
+                        "main"
+                    ],
+                    "enableTauriAPI": true
+                }
+            ]
         },
         "updater": {
             "active": false
@@ -62,7 +95,7 @@
                 "fullscreen": false,
                 "height": 956,
                 "resizable": false,
-                "title": "SmartyApp",
+                "title": "Pilti",
                 "width": 440
             }
         ]

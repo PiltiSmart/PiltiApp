@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Change Server</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            width: 100%;
+            max-width: 380px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        h2 {
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 20px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 13px;
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            color: #555;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        input[type="url"] {
+            width: 100%;
+            padding: 12px 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            outline: none;
+        }
+
+        input[type="url"]:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+        }
+
+        input[type="url"]::placeholder {
+            color: #aaa;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .cancel-btn {
+            background: #f0f0f0;
+            color: #666;
+        }
+
+        .cancel-btn:hover {
+            background: #e0e0e0;
+        }
+
+        .save-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .save-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .save-btn:active {
+            transform: translateY(0);
+        }
+
+        .error {
+            color: #e74c3c;
+            font-size: 12px;
+            margin-top: 8px;
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h2>Change Server</h2>
+        <p class="subtitle">Enter the URL of your server</p>
+
+        <label for="serverUrl">Server URL</label>
+        <input type="url" id="serverUrl" placeholder="https://example.com" autocomplete="off" spellcheck="false">
+        <p class="error" id="errorMsg">Please enter a valid URL starting with http:// or https://</p>
+
+        <div class="buttons">
+            <button class="cancel-btn" id="cancelBtn">Cancel</button>
+            <button class="save-btn" id="saveBtn">Save & Restart</button>
+        </div>
+    </div>
+
+    <script>
+        // Wait for Tauri to be ready
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Get Tauri APIs - handle both global and module patterns
+            const invoke = window.__TAURI__?.invoke || window.__TAURI__?.tauri?.invoke;
+            const appWindow = window.__TAURI__?.window?.appWindow || window.__TAURI__?.window?.getCurrent?.();
+
+            const urlInput = document.getElementById('serverUrl');
+            const saveBtn = document.getElementById('saveBtn');
+            const cancelBtn = document.getElementById('cancelBtn');
+            const errorMsg = document.getElementById('errorMsg');
+
+            // Load current URL
+            try {
+                const url = await invoke('get_current_url');
+                urlInput.value = url;
+                urlInput.select();
+            } catch (err) {
+                console.error('Failed to load current URL:', err);
+                urlInput.value = 'https://smartyapp.piltismart.com';
+            }
+
+            // Focus the input
+            urlInput.focus();
+
+            function validateUrl(url) {
+                return url && (url.startsWith('http://') || url.startsWith('https://'));
+            }
+
+            function showError(message) {
+                if (message) errorMsg.textContent = message;
+                errorMsg.style.display = 'block';
+                urlInput.style.borderColor = '#e74c3c';
+            }
+
+            function hideError() {
+                errorMsg.style.display = 'none';
+                urlInput.style.borderColor = '#e0e0e0';
+            }
+
+            urlInput.addEventListener('input', hideError);
+
+            saveBtn.addEventListener('click', async () => {
+                const url = urlInput.value.trim();
+                if (!validateUrl(url)) {
+                    showError('Please enter a valid URL starting with http:// or https://');
+                    return;
+                }
+
+                saveBtn.disabled = true;
+                saveBtn.textContent = 'Restarting...';
+
+                try {
+                    await invoke('update_url', { url });
+                    // Window will be closed by Rust after successful update
+                } catch (err) {
+                    console.error('Error:', err);
+                    showError('Failed to save. Please try again.');
+                    saveBtn.disabled = false;
+                    saveBtn.textContent = 'Save & Restart';
+                }
+            });
+
+            cancelBtn.addEventListener('click', async () => {
+                try {
+                    await appWindow.close();
+                } catch (err) {
+                    // Fallback: try to close via invoke
+                    try {
+                        await invoke('close_settings_window');
+                    } catch (e) {
+                        console.error('Failed to close window:', e);
+                    }
+                }
+            });
+
+            // Handle Enter key
+            urlInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    saveBtn.click();
+                } else if (e.key === 'Escape') {
+                    cancelBtn.click();
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>
