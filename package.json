@@ -1,0 +1,16 @@
+{
+    "name": "smartyapp-pwa",
+    "private": true,
+    "version": "0.1.0",
+    "type": "module",
+    "scripts": {
+        "dev": "tauri dev",
+        "build": "tauri build",
+        "preview": "tauri preview",
+        "tauri": "tauri"
+    },
+    "devDependencies": {
+        "@tauri-apps/cli": "^1.5.0",
+        "typescript": "^5.0.0"
+    }
+}
