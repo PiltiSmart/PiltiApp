@@ -9,6 +9,8 @@ on:
 
 jobs:
   publish-macos:
+    permissions:
+      contents: write
     runs-on: macos-latest
     env:
       CARGO_INCREMENTAL: 0

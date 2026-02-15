@@ -9,6 +9,8 @@ on:
 
 jobs:
   publish-linux:
+    permissions:
+      contents: write
     runs-on: ubuntu-22.04
     env:
       CARGO_INCREMENTAL: 0
