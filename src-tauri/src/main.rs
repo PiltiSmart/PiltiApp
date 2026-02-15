@@ -3,6 +3,7 @@
 use tauri::{Manager, CustomMenuItem, Menu, MenuItem, Submenu, WindowBuilder, WindowUrl};
 use std::fs;
 use std::path::PathBuf;
+use std::io::Write;
 
 #[derive(serde::Serialize, serde::Deserialize)]
 struct AppConfig {
@@ -86,7 +87,7 @@ fn log_debug(msg: &str) {
     let mut path = std::env::temp_dir();
     path.push("pilti_debug.log");
     if let Ok(mut file) = std::fs::OpenOptions::new().create(true).append(true).open(path) {
-        let _ = std::io::Write::writeln!(&mut file, "{}", msg);
+        let _ = writeln!(file, "{}", msg);
     }
 }
 
