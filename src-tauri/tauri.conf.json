@@ -66,8 +66,7 @@
             "windows": {
                 "certificateThumbprint": null,
                 "digestAlgorithm": "sha256",
-                "timestampUrl": "",
-                "webviewInstallMode": "DownloadBootstrapper"
+                "timestampUrl": ""
             }
         },
         "security": {
