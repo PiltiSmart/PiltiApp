@@ -82,19 +82,33 @@ fn open_settings_window(app_handle: &tauri::AppHandle) {
     .build();
 }
 
+fn log_debug(msg: &str) {
+    let mut path = std::env::temp_dir();
+    path.push("pilti_debug.log");
+    if let Ok(mut file) = std::fs::OpenOptions::new().create(true).append(true).open(path) {
+        let _ = std::io::Write::writeln!(&mut file, "{}", msg);
+    }
+}
+
 fn main() {
+    log_debug("Starting Pilti application...");
+
     // App Menu (Pilti)
-    let app_menu = Submenu::new(
-        "Pilti",
-        Menu::new()
-            .add_native_item(MenuItem::About("Pilti".to_string(), tauri::AboutMetadata::default()))
-            .add_native_item(MenuItem::Separator)
+    let mut app_menu_inner = Menu::new()
+        .add_native_item(MenuItem::About("Pilti".to_string(), tauri::AboutMetadata::default()))
+        .add_native_item(MenuItem::Separator);
+
+    #[cfg(target_os = "macos")]
+    {
+        app_menu_inner = app_menu_inner
             .add_native_item(MenuItem::Hide)
             .add_native_item(MenuItem::HideOthers)
             .add_native_item(MenuItem::ShowAll)
-            .add_native_item(MenuItem::Separator)
-            .add_native_item(MenuItem::Quit),
-    );
+            .add_native_item(MenuItem::Separator);
+    }
+
+    app_menu_inner = app_menu_inner.add_native_item(MenuItem::Quit);
+    let app_menu = Submenu::new("Pilti", app_menu_inner);
 
     // Settings Menu
     let change_url = CustomMenuItem::new("change_url".to_string(), "Change Server").accelerator("CmdOrCtrl+Shift+C");
@@ -103,6 +117,8 @@ fn main() {
     let menu = Menu::new()
         .add_submenu(app_menu)
         .add_submenu(settings_menu);
+
+    log_debug("Menu created, building app...");
 
     tauri::Builder::default()
         .menu(menu)
@@ -113,13 +129,18 @@ fn main() {
             }
         })
         .setup(|app| {
+            log_debug("App setup started");
             let app_handle = app.handle();
             let url = load_url(&app_handle);
+            log_debug(&format!("Loaded URL: {}", url));
             
             if let Some(main_window) = app.get_window("main") {
+                log_debug("Main window found, redirecting...");
                 // Redirect to saved URL or default
                 let script = format!("window.location.href = '{}';", url);
                 let _ = main_window.eval(&script);
+            } else {
+                log_debug("Main window NOT found via get_window");
             }
 
             Ok(())
