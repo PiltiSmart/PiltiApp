@@ -1,0 +1,44 @@
+name: "publish-macos"
+
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - "v*"
+
+jobs:
+  publish-macos:
+    runs-on: macos-latest
+    env:
+      CARGO_INCREMENTAL: 0
+      MACOSX_DEPLOYMENT_TARGET: 14.0
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+
+      - name: install frontend dependencies
+        run: npm install
+
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: v__VERSION__
+          releaseName: "Pilti v__VERSION__"
+          releaseBody: "Automated release from GitHub Actions."
+          releaseDraft: true
+          prerelease: false
