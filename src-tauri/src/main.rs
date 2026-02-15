@@ -9,32 +9,33 @@ struct AppConfig {
     url: String,
 }
 
-fn get_config_path(app_handle: &tauri::AppHandle) -> PathBuf {
+fn get_config_path(app_handle: &tauri::AppHandle) -> Option<PathBuf> {
     app_handle.path_resolver()
         .app_config_dir()
-        .unwrap()
-        .join("settings.json")
+        .map(|dir| dir.join("settings.json"))
 }
 
 fn save_url(app_handle: &tauri::AppHandle, url: &str) {
-    let config_path = get_config_path(app_handle);
-    if let Some(config_dir) = config_path.parent() {
-        if !config_dir.exists() {
-            let _ = fs::create_dir_all(config_dir);
+    if let Some(config_path) = get_config_path(app_handle) {
+        if let Some(config_dir) = config_path.parent() {
+            if !config_dir.exists() {
+                let _ = fs::create_dir_all(config_dir);
+            }
         }
-    }
-    let config = AppConfig { url: url.to_string() };
-    if let Ok(config_str) = serde_json::to_string(&config) {
-        let _ = fs::write(config_path, config_str);
+        let config = AppConfig { url: url.to_string() };
+        if let Ok(config_str) = serde_json::to_string(&config) {
+            let _ = fs::write(config_path, config_str);
+        }
     }
 }
 
 fn load_url(app_handle: &tauri::AppHandle) -> String {
-    let config_path = get_config_path(app_handle);
-    if config_path.exists() {
-        if let Ok(config_str) = fs::read_to_string(config_path) {
-             if let Ok(config) = serde_json::from_str::<AppConfig>(&config_str) {
-                return config.url;
+    if let Some(config_path) = get_config_path(app_handle) {
+         if config_path.exists() {
+            if let Ok(config_str) = fs::read_to_string(config_path) {
+                 if let Ok(config) = serde_json::from_str::<AppConfig>(&config_str) {
+                    return config.url;
+                }
             }
         }
     }
@@ -115,11 +116,11 @@ fn main() {
             let app_handle = app.handle();
             let url = load_url(&app_handle);
             
-            let main_window = app.get_window("main").unwrap();
-            
-            // Redirect to saved URL or default
-            let script = format!("window.location.href = '{}';", url);
-            let _ = main_window.eval(&script);
+            if let Some(main_window) = app.get_window("main") {
+                // Redirect to saved URL or default
+                let script = format!("window.location.href = '{}';", url);
+                let _ = main_window.eval(&script);
+            }
 
             Ok(())
         })
